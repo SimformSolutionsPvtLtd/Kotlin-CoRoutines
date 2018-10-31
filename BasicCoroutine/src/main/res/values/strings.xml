@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">Kotlin Coroutine</string>
+
+    <string name="title_threads">Threads base</string>
+    <string name="title_callbacks">Callbacks pattern</string>
+    <string name="title_promise">Promise pattern</string>
+    <string name="title_suspend">Suspend pattern</string>
+    <string name="title_async">Async pattern</string>
+    <string name="title_future">Future pattern</string>
+</resources>
