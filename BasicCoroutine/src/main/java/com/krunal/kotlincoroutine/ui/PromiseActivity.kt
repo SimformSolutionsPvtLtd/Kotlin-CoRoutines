@@ -29,39 +29,43 @@ class PromiseActivity : AppCompatActivity() {
         setContentView(R.layout.activity_json)
     }
 
-    private fun fetchTopStories() = async<JSONArray?> {
-        try {
-            val response =
-                AppConstanse.getApiMethod("${AppConstanse.API_BASE_URL}${AppConstanse.TOP_STORIES}")
-
-            if (response != null) {
-                return@async JSONArray(response)
-            } else {
-                throw RuntimeException("Fail to get response")
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "FetchTopStories Exception : $e")
-            throw e
-        }
-    }
-
-    private fun fetchNewsStoriesDetail(storyId: String?) = async<JSONObject?> {
-        try {
-            if (storyId != null) {
+    private fun fetchTopStories(): Promise<JSONArray?> {
+        return doAsyncResultPromise {
+            try {
                 val response =
-                    AppConstanse.getApiMethod("${AppConstanse.API_BASE_URL}${AppConstanse.getNewsStoryDetail(storyId)}")
+                    AppConstanse.getApiMethod("${AppConstanse.API_BASE_URL}${AppConstanse.TOP_STORIES}")
 
                 if (response != null) {
-                    return@async JSONObject(response)
+                    return@doAsyncResultPromise JSONArray(response)
                 } else {
                     throw RuntimeException("Fail to get response")
                 }
-            } else {
-                throw RuntimeException("storyId null")
+            } catch (e: Exception) {
+                Log.e(TAG, "FetchTopStories Exception : $e")
+                throw e
             }
-        } catch (e: Exception) {
-            Log.e(TAG, "FetchNewsStoriesDetail Exception : $e")
-            throw e
+        }
+    }
+
+    private fun fetchNewsStoriesDetail(storyId: String?): Promise<JSONObject?> {
+        return doAsyncResultPromise {
+            try {
+                if (storyId != null) {
+                    val response =
+                        AppConstanse.getApiMethod("${AppConstanse.API_BASE_URL}${AppConstanse.getNewsStoryDetail(storyId)}")
+
+                    if (response != null) {
+                        return@doAsyncResultPromise JSONObject(response)
+                    } else {
+                        throw RuntimeException("Fail to get response")
+                    }
+                } else {
+                    throw RuntimeException("storyId null")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "FetchNewsStoriesDetail Exception : $e")
+                throw e
+            }
         }
     }
 
@@ -70,7 +74,9 @@ class PromiseActivity : AppCompatActivity() {
             .thenCompose { topStories -> fetchNewsStoriesDetail(topStories?.getString(0)) }
             .thenAccept { newsStoriesDetail ->
                 newsStoriesDetail?.let {
-                    jsonView.bindJson(it)
+                    runOnUiThread {
+                        jsonView.bindJson(it)
+                    }
                 }
             }
     }
