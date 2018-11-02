@@ -8,13 +8,12 @@ import androidx.appcompat.app.AppCompatActivity
 import com.dandan.jsonhandleview.library.JsonViewLayout
 import com.krunal.kotlincoroutine.R
 import com.krunal.kotlincoroutine.utils.AppConstanse
+import com.krunal.kotlincoroutine.utils.doAsync
 import kotlinx.coroutines.*
 import org.json.JSONArray
 import org.json.JSONObject
-import kotlinx.coroutines.async
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
-import kotlin.coroutines.suspendCoroutine
 
 class SuspendActivity : AppCompatActivity() {
     companion object {
@@ -35,42 +34,50 @@ class SuspendActivity : AppCompatActivity() {
         setContentView(R.layout.activity_json)
     }
 
-    private suspend fun fetchTopStories() = suspendCoroutine<JSONArray?> { cont ->
-        GlobalScope.async {
-            try {
-                val response =
-                    AppConstanse.getApiMethod("${AppConstanse.API_BASE_URL}${AppConstanse.TOP_STORIES}")
+    private suspend fun fetchTopStories(): JSONArray? {
+        return suspendCancellableCoroutine {
+            doAsync {
+                try {
+                    val response =
+                        AppConstanse.getApiMethod("${AppConstanse.API_BASE_URL}${AppConstanse.TOP_STORIES}")
 
-                if (response != null) {
-                    cont.resume(JSONArray(response))
-                } else {
-                    cont.resumeWithException(RuntimeException("Fail to get response"))
+                    if (response != null) {
+                        it.resume(JSONArray(response))
+                    } else {
+                        it.resumeWithException(RuntimeException("Fail to get response"))
+                    }
+                } catch (e: Exception) {
+                    Log.e(PromiseActivity.TAG, "FetchTopStories Exception : $e")
+                    it.resumeWithException(e)
                 }
-            } catch (e: Exception) {
-                Log.e(TAG, "FetchTopStories Exception : $e")
-                cont.resumeWithException(e)
             }
         }
     }
 
-    private suspend fun fetchNewsStoriesDetail(storyId: String?) = suspendCoroutine<JSONObject?> { cont ->
-        GlobalScope.async {
-            try {
-                if (storyId != null) {
-                    val response =
-                        AppConstanse.getApiMethod("${AppConstanse.API_BASE_URL}${AppConstanse.getNewsStoryDetail(storyId)}")
+    private suspend fun fetchNewsStoriesDetail(storyId: String?): JSONObject? {
+        return suspendCancellableCoroutine {
+            doAsync {
+                try {
+                    if (storyId != null) {
+                        val response =
+                            AppConstanse.getApiMethod(
+                                "${AppConstanse.API_BASE_URL}${AppConstanse.getNewsStoryDetail(
+                                    storyId
+                                )}"
+                            )
 
-                    if (response != null) {
-                        cont.resume(JSONObject(response))
+                        if (response != null) {
+                            it.resume(JSONObject(response))
+                        } else {
+                            it.resumeWithException(RuntimeException("Fail to get response"))
+                        }
                     } else {
-                        cont.resumeWithException(RuntimeException("Fail to get response"))
+                        it.resumeWithException(RuntimeException("storyId null"))
                     }
-                } else {
-                    cont.resumeWithException(RuntimeException("storyId null"))
+                } catch (e: Exception) {
+                    Log.e(TAG, "FetchNewsStoriesDetail Exception : $e")
+                    it.resumeWithException(e)
                 }
-            } catch (e: Exception) {
-                Log.e(TAG, "FetchNewsStoriesDetail Exception : $e")
-                cont.resumeWithException(e)
             }
         }
     }

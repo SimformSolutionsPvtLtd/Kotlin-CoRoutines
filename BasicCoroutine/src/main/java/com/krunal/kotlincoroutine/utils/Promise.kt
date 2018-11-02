@@ -1,20 +1,31 @@
 package com.krunal.kotlincoroutine.utils
 
-import kotlinx.coroutines.*
+import java.lang.ref.WeakReference
+import java.util.concurrent.Future
 
-typealias Promise<T> = Deferred<T>
+typealias Promise<T> = Future<T>
 
-fun <T, Y> Promise<T>.thenAccept(handler: (T) -> Y): Promise<Y> = GlobalScope.async {
-    val res = this@thenAccept.await()
+fun <T, R> T.doAsyncResultPromise(
+    exceptionHandler: ((Throwable) -> Unit)? = crashLogger,
+    task: AsyncContext<T>.() -> R
+): Promise<R> {
+    val context = AsyncContext(WeakReference(this))
+    return BackgroundExecutor.submit {
+        try {
+            context.task()
+        } catch (thr: Throwable) {
+            exceptionHandler?.invoke(thr)
+            throw thr
+        }
+    }
+}
+
+fun <T, Y> Promise<T>.thenCompose(handler: (T) -> Promise<Y>): Promise<Y> = doAsyncResultPromise {
+    val res = this@thenCompose.get()
+    handler.invoke(res).get()
+}
+
+fun <T, Y> Promise<T>.thenAccept(handler: (T) -> Y): Promise<Y> = doAsyncResultPromise {
+    val res = this@thenAccept.get()
     handler.invoke(res)
 }
-
-fun <T, Y> Promise<T>.thenCompose(handler: (T) -> Promise<Y>): Promise<Y> = GlobalScope.async {
-    val res = this@thenCompose.await()
-    handler.invoke(res).await()
-}
-
-fun <T> async(block: suspend CoroutineScope.() -> T) : Promise<T> = async {
-    block.invoke(this)
-}
-

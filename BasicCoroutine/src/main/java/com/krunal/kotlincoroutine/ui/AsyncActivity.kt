@@ -12,7 +12,6 @@ import android.graphics.Canvas
 import android.graphics.Matrix
 import android.util.Log
 import com.krunal.kotlincoroutine.utils.AppConstanse
-import com.krunal.kotlincoroutine.utils.async
 import kotlinx.coroutines.*
 import java.net.HttpURLConnection
 import java.net.URL
@@ -36,7 +35,7 @@ class AsyncActivity : AppCompatActivity() {
         setContentView(R.layout.activity_image)
     }
 
-    private fun loadImageAsync(imageURL: String): Deferred<Bitmap?> = async {
+    private fun loadImageAsync(imageURL: String): Deferred<Bitmap?> = GlobalScope.async {
         var bitmap: Bitmap? = null
         try {
             val imageUrl = URL(imageURL)
