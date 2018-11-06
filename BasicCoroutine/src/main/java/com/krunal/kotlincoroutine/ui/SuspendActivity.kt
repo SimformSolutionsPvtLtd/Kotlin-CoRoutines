@@ -8,7 +8,6 @@ import androidx.appcompat.app.AppCompatActivity
 import com.dandan.jsonhandleview.library.JsonViewLayout
 import com.krunal.kotlincoroutine.R
 import com.krunal.kotlincoroutine.utils.AppConstanse
-import com.krunal.kotlincoroutine.utils.doAsync
 import kotlinx.coroutines.*
 import org.json.JSONArray
 import org.json.JSONObject
@@ -36,58 +35,61 @@ class SuspendActivity : AppCompatActivity() {
 
     private suspend fun fetchTopStories(): JSONArray? {
         return suspendCancellableCoroutine {
-            doAsync {
-                try {
-                    val response =
-                        AppConstanse.getApiMethod("${AppConstanse.API_BASE_URL}${AppConstanse.TOP_STORIES}")
+            try {
+                val response =
+                    AppConstanse.getApiMethod("${AppConstanse.API_BASE_URL}${AppConstanse.TOP_STORIES}")
 
-                    if (response != null) {
-                        it.resume(JSONArray(response))
-                    } else {
-                        it.resumeWithException(RuntimeException("Fail to get response"))
-                    }
-                } catch (e: Exception) {
-                    Log.e(PromiseActivity.TAG, "FetchTopStories Exception : $e")
-                    it.resumeWithException(e)
+                if (response != null) {
+                    it.resume(JSONArray(response))
+                } else {
+                    it.resumeWithException(RuntimeException("Fail to get response"))
                 }
+            } catch (e: Exception) {
+                Log.e(PromiseActivity.TAG, "FetchTopStories Exception : $e")
+                it.resumeWithException(e)
             }
         }
     }
 
     private suspend fun fetchNewsStoriesDetail(storyId: String?): JSONObject? {
         return suspendCancellableCoroutine {
-            doAsync {
-                try {
-                    if (storyId != null) {
-                        val response =
-                            AppConstanse.getApiMethod(
-                                "${AppConstanse.API_BASE_URL}${AppConstanse.getNewsStoryDetail(
-                                    storyId
-                                )}"
-                            )
+            try {
+                if (storyId != null) {
+                    val response =
+                        AppConstanse.getApiMethod(
+                            "${AppConstanse.API_BASE_URL}${AppConstanse.getNewsStoryDetail(
+                                storyId
+                            )}"
+                        )
 
-                        if (response != null) {
-                            it.resume(JSONObject(response))
-                        } else {
-                            it.resumeWithException(RuntimeException("Fail to get response"))
-                        }
+                    if (response != null) {
+                        it.resume(JSONObject(response))
                     } else {
-                        it.resumeWithException(RuntimeException("storyId null"))
+                        it.resumeWithException(RuntimeException("Fail to get response"))
                     }
-                } catch (e: Exception) {
-                    Log.e(TAG, "FetchNewsStoriesDetail Exception : $e")
-                    it.resumeWithException(e)
+                } else {
+                    it.resumeWithException(RuntimeException("storyId null"))
                 }
+            } catch (e: Exception) {
+                Log.e(TAG, "FetchNewsStoriesDetail Exception : $e")
+                it.resumeWithException(e)
             }
         }
     }
 
     private fun viewData() {
+
         job = GlobalScope.launch(Dispatchers.Main) {
             try {
-                val topStories = fetchTopStories()
-                val newsStoriesDetail = fetchNewsStoriesDetail(topStories?.getString(0))
-                newsStoriesDetail?.let {
+                val topStories = GlobalScope.async { fetchTopStories() }.await()
+                /*val newsStoriesDetail = JSONArray()
+                for (i in 0 until topStories!!.length()) {
+                    val detail1 = GlobalScope.async { fetchNewsStoriesDetail(topStories.getString(i)) }.await()
+                    Log.e(TAG, "for : $i -> $detail1")
+                    newsStoriesDetail.put(detail1)
+                }*/
+                val newsStoriesDetail = GlobalScope.async { fetchNewsStoriesDetail(topStories?.getString(0)) }.await()
+                newsStoriesDetail.let {
                     jsonView.bindJson(it)
                 }
             } catch (e: Exception) {
