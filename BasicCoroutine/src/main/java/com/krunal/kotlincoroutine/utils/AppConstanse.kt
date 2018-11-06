@@ -1,11 +1,6 @@
 package com.krunal.kotlincoroutine.utils
 
-import android.util.Log
-import java.io.BufferedReader
-import java.io.InputStreamReader
-import java.net.HttpURLConnection
 import java.net.URL
-import javax.net.ssl.HttpsURLConnection
 
 object AppConstanse {
     const val TAG = "AppConstanse"
@@ -20,30 +15,6 @@ object AppConstanse {
     }
 
     fun getApiMethod(url: String): String? {
-        val apiUrl = URL(url)
-        val conn = apiUrl.openConnection() as HttpURLConnection
-        conn.readTimeout = 15000 //15 second
-        conn.connectTimeout = 15000 //15 second
-        conn.requestMethod = "GET"
-
-        val responseCode = conn.responseCode
-        if (responseCode == HttpsURLConnection.HTTP_OK) {
-            val bufferedReader = BufferedReader(InputStreamReader(conn.inputStream))
-            val sb = StringBuffer("")
-
-            do {
-                val line = bufferedReader.readLine()
-                line?.let {
-                    sb.append(line)
-                }
-            } while (line != null)
-
-            bufferedReader.close()
-            Log.e(TAG, "GET True : $sb")
-            return sb.toString()
-        } else {
-            Log.e(TAG, "GET False : $responseCode")
-        }
-        return null
+        return URL(url).readText()
     }
 }

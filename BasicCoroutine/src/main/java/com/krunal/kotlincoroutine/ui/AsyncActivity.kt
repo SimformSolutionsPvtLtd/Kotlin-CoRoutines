@@ -20,7 +20,6 @@ class AsyncActivity : AppCompatActivity() {
 
     companion object {
         const val TAG = "AsyncActivity"
-
         fun newInstance(context: Context): Intent {
             return Intent(context, AsyncActivity::class.java)
         }
